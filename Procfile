@@ -1,3 +1,1 @@
-web: python bot/bot_train.py
-
-
+worker: python bot/bot_train.py
