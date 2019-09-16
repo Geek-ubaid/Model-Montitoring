@@ -11,6 +11,7 @@ try:
 except ImportError:
     plt = None
     
+import keras_mnist_example as kr
     
 class DLBot(object):
 
@@ -126,9 +127,11 @@ class DLBot(object):
 
     def setup_model(self,bot,update):
        
+        print(update.message.text)
         if update.message.text == '1':
+            print(1)
             probkeyboard = [['Classification','regression']]
-            update.message.reply_text(self.create_message, reply_markup=ReplyKeyboardMarkup(probkeyboard))
+            update.message.reply_text(self.type_of_problem, reply_markup=ReplyKeyboardMarkup(probkeyboard))
             
         elif update.message.text == 'a':
             self.config_model_file['no_of_layers'] = '5'
@@ -160,7 +163,7 @@ class DLBot(object):
 
         elif update.message.text == 'Classification':
          	model_board = [['ANN','CNN']]
-         	update.message.reply_text(self.model_type_message, reply_makrup=ReplyKeyboardMarkup(model_board))
+         	update.message.reply_text(self.model_type_message, reply_markup=ReplyKeyboardMarkup(model_board))
 
         elif update.message.text == 'ANN':
         	param_board = [['a','b','c','d']]
