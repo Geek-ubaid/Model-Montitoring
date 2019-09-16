@@ -1,1 +1,3 @@
-web: python app/bot_train.py
+web: python bot/bot_train.py
+
+

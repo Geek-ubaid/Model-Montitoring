@@ -10,7 +10,7 @@ try:
     import matplotlib.pyplot as plt
 except ImportError:
     plt = None
-    
+import json    
 import keras_mnist_example as kr
     
 class DLBot(object):
