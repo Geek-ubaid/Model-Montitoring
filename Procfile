@@ -1,0 +1,1 @@
+web: python app/bot_train.py
