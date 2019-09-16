@@ -1,0 +1,4 @@
+no_of_nodes: 128
+no_of_layers: 5
+activations: relu
+metrics: Accuracy
