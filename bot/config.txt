@@ -1,5 +1,0 @@
-type_of_problem: 
-no_of_nodes: 
-no_of_layers: 
-activations: 
-metrics: 

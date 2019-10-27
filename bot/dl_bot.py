@@ -1,3 +1,7 @@
+import warnings
+
+warnings.filterwarnings('ignore')
+
 from telegram.ext import Updater, CommandHandler, Filters, RegexHandler,ConversationHandler, MessageHandler
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 import keras_mnist_example as kr
@@ -11,6 +15,9 @@ try:
     import matplotlib.pyplot as plt
 except ImportError:
     plt = None
+      
+modeltype, problem, makemodel, modelconfig = range(4)
+           
     
 class DLBot(object):
 
@@ -22,7 +29,7 @@ class DLBot(object):
 
         self.token = token  
         self.user_id = user_id
-
+        self.param = ''
         self.filters = None
         self.chat_id = None  
         self.bot_active = False  
@@ -55,26 +62,28 @@ class DLBot(object):
                                   " 2. CNN Architecture.\n"     
 
         self.type_of_problem = " Select the type of problem:\n"\
-        					   " - Classification\n"\
-        					   " - Regression"
+        					   " 1. Classification\n"\
+        					   " 2. Regression"
 
         self.create_message = " Choose how do you wanna create a model:\n" \
                               " 1. Create custom model.\n"\
-                              " 2. Select some open source model.\n"
+                              " 2. Select some open source model.\nType \cancel to cancel the process"
 
         self.create_model = " Choose options to provide value:\n"\
                             " a. Set no of hidden layers.\n"\
                             " b. Set no of hidden nodes.\n"\
                             " c. Set the activation layer.\n"\
                             " d. Set the metric to be used.\n"\
-                            " Type done to save values."
+                            " Send /done to save values."
 
         self.update_model = " Choose the param you want to update:\n"\
-                            " i. no of nodes\n"\
-                            " ii. no of layers\n"\
-                            " iii. activation function\n"\
-                            " iv. regularization\n"\
-                            " v. metric\n"\
+                            " 1. no of nodes\n"\
+                            " 2. no of layers\n"\
+                            " 3. activation function\n"\
+                            " 4. regularization\n"\
+                            " 5. metric\n"\
+                            " Send /show to see the previous values\n"\
+                            " Send /cancel to cancel the operation"\
 
     def activate_bot(self):
 
@@ -85,17 +94,34 @@ class DLBot(object):
         self.filters = Filters.user(user_id=self.user_id) if self.user_id else None
         
         # Command and conversation handles
-        dp.add_handler(CommandHandler("update", self.modify, filters=self.filters))
+        # dp.add_handler(CommandHandler("update", self.modify, filters=self.filters))
         dp.add_handler(CommandHandler("start", self.start, filters=self.filters))
         dp.add_handler(CommandHandler("train", self.train, filters=self.filters))
         dp.add_handler(CommandHandler("help", self.help, filters=self.filters))
-        dp.add_handler(CommandHandler("make", self.create)) 
         dp.add_handler(CommandHandler("status", self.status, filters=self.filters))  
         dp.add_handler(CommandHandler("quiet", self.quiet, filters=self.filters))  
         dp.add_handler(CommandHandler("plot", self.plot_loss, filters=self.filters))  # /plot loss
-        dp.add_handler(MessageHandler([Filters.text], self.setup_model))
+        
+        update_handler = ConversationHandler(
+            entry_points = [CommandHandler('update', self.update)],
+            states = {},
+            fallbacks = [CommandHandler('cancel',self.cancel)]
+        )
 
-        # Start the Bot
+        make_handler = ConversationHandler(
+            entry_points=[CommandHandler('make',self.create)],
+            states={
+                modeltype: [MessageHandler(Filters.text,self.setmodeltype)],
+                problem: [MessageHandler(Filters.text,self.setproblem)],
+                makemodel: [MessageHandler(Filters.text,self.setupmodel)],
+                modelconfig: [MessageHandler(Filters.text,self.make_config), CommandHandler('done',self.write_config)]
+            },
+          
+            fallbacks=[CommandHandler('cancel',self.cancel)]
+        )
+        dp.add_handler(make_handler)
+        dp.add_handler(update_handler)
+
         self.updater.start_polling()
         self.bot_active = True
         print("Bot started")
@@ -110,87 +136,75 @@ class DLBot(object):
         update.message.reply_text(self.create_message, reply_markup=ReplyKeyboardMarkup(keyboard))
         self.chat_id = update.message.chat_id
         text = update.message.text    
-        
         if text:
-        	print('text recieved')
-
+            return modeltype
         else:
             return CommandHandler.END
         
     def train(self,bot,update):
-        
         print("train")
         kr.model_train(bot,update)
-            
-
-    def setup_model(self,bot,update):
-       
+        
+    def setmodeltype(self,bot,update):
+        print('inside setmodeltype')
         print(update.message.text)
-        if update.message.text == '1':
-            print(1)
-            probkeyboard = [['Classification','regression']]
-            update.message.reply_text(self.type_of_problem, reply_markup=ReplyKeyboardMarkup(probkeyboard))
-            
-        elif update.message.text == 'a':
-            self.config_model_file['no_of_layers'] = '5'
-            return update.message.reply_text("Chose any number between(1-100)",reply_markup=ReplyKeyboardRemove())
+        probkeyboard = [['Classification','regression']]
+        update.message.reply_text(self.type_of_problem, reply_markup=ReplyKeyboardMarkup(probkeyboard))
+        return problem
+        
+    def setproblem(self,bot,update):
+        self.config_model_file['type_of_problem'] = update.message.text
+        model_board = [['ANN','CNN']]
+        update.message.reply_text(self.model_type_message, reply_markup=ReplyKeyboardMarkup(model_board))
+        return makemodel
+    
+    def setupmodel(self,bot,update):
+        if self.param:
+            self.config_model_file[self.param] = update.message.text
+            update.message.reply_text('You have entered '+ update.message.text+ ' for ' + self.param )
+        param_board = [['a','b','c','d']]
+        update.message.reply_text(self.create_model, reply_markup=ReplyKeyboardMarkup(param_board))
+        return modelconfig
 
-
-        elif update.message.text == 'b':
+    def make_config(self,bot,update):        
+        
+        if update.message.text.lower() == 'a':
             param_board = [['a','b','c','d']]
+            self.param = 'no_of_layers'
+            update.message.reply_text("Chose any number between(1-100)",reply_markup=ReplyKeyboardRemove())
+            return makemodel
+
+        elif update.message.text.lower() == 'b':
             reply_board = [['32','64','128','256','512','1024','2048']]
-            update.message.reply_text(self.create_model, reply_markup=ReplyKeyboardMarkup(param_board))
-            self.config_model_file['no_of_nodes'] = 128
-            return update.message.reply_text("Select the no of hidden nodes", reply_markup=ReplyKeyboardMarkup(reply_board))
+            update.message.reply_text("Select the no of hidden nodes", reply_markup=ReplyKeyboardMarkup(reply_board))
+            self.param = 'no_of_nodes'
+            return makemodel
 
-
-        elif update.message.text == 'c':
-            param_board = [['a','b','c','d']]
-            update.message.reply_text(self.create_model, reply_markup=ReplyKeyboardMarkup(param_board))
+        elif update.message.text.lower() == 'c':
             reply_board = [['relu','softmax','sigmoid','tanh']]
-            self.config_model_file['activations'] = 'relu' 
-            return update.message.reply_text("select the activation type", reply_markup=ReplyKeyboardMarkup(reply_board))
+            update.message.reply_text("select the activation type", reply_markup=ReplyKeyboardMarkup(reply_board))
+            self.param = 'activations'
+            return makemodel
      
-        elif update.message.text == 'd':
-            param_board = [['a','b','c','d']]
-
+        elif update.message.text.lower() == 'd':
             reply_board = [['Accuracy','recall','precision','roc','rmse']]
-            update.message.reply_text(self.create_model, reply_markup=ReplyKeyboardMarkup(param_board))
-            self.config_model_file['metrics'] = 'Accuracy'
-            return update.message.reply_text("Select the metric required:", reply_markup=ReplyKeyboardMarkup(reply_board))
-
-        elif update.message.text == 'Classification':
-         	model_board = [['ANN','CNN']]
-         	update.message.reply_text(self.model_type_message, reply_markup=ReplyKeyboardMarkup(model_board))
-
-        elif update.message.text == 'ANN':
-        	param_board = [['a','b','c','d']]
-	        update.message.reply_text(self.create_model, reply_markup=ReplyKeyboardMarkup(param_board))
-            
-        elif update.message.text == 'done':
-            print("Value Recieved:", self.config_model_file, sep=" ")
-            with open('config.txt', 'w') as file:
-                for i in self.config_model_file.keys():
-                    file.write(i + ": " + str(self.config_model_file[i]) + '\n')    
-
-        #     return ConversationHandler.END
-                
-        # else:
-        #     update.message.reply_text("Invalid Option. Try again!")
-        #     return MessageHandler.End
-
-    # def update_config_handler(self):
-    #     print("for updating config file!")
-    #     # self.update_model()
+            update.message.reply_text("Select the metric required:", reply_markup=ReplyKeyboardMarkup(reply_board))
+            self.param = 'metrics'
+            return makemodel
+             
+    def write_config(self,bot,update):
+        print("Value Recieved:", self.config_model_file, sep=" ")
+        with open('config.json', 'w') as file:
+            file.write(json.dumps(self.config_model_file))
+        return ConversationHandler.END     
         
     def view_model(self):
         print("The model architecture is:")
     
     def modify(self,bot,update):
         print("for updating model!!")
-        keyboard = [['i','ii','iii','iv','v']]
+        keyboard = [['1','2','3','4','5']]
         update.message.reply_text(self.update_model, reply_markup=ReplyKeyboardMarkup(keyboard))
-        self.chat_id = update.message.chat_id
         text = update.message.text    
         if text:
             print("text recieved")
@@ -264,7 +278,12 @@ class DLBot(object):
         
         update.message.reply_text(self._status_message)
 
-   
+    def cancel(self,bot,update):
+        user = update.message.from_user
+        update.message.reply_text('Task Ended by user!! Config file not changed',
+                                reply_markup=ReplyKeyboardRemove())
+    
+        return ConversationHandler.END
 
 
     # Stop training process callbacks
