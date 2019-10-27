@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-def model_train():
+def model_train(bot,update):
     import keras
     from keras.datasets import mnist
     from keras.models import Sequential
@@ -11,18 +11,14 @@ def model_train():
     ##################################################################################################
     from dl_bot import DLBot
     from telegram_bot_callback import TelegramCallback
-
-    telegram_token = "823412051:AAHEYubDdjV-aJqcFQvbWTOLgKPX5BMTnUo"  
-
-    telegram_user_id = 645230191  
-
-    bot = DLBot(token=telegram_token, user_id=telegram_user_id)
-    telegram_callback = TelegramCallback(bot)
+    
+    # bot = DLBot(token=telegram_token, user_id=telegram_user_id)
+    telegram_callback = TelegramCallback(bot, update)
     ###################################################################################################
 
     batch_size = 128
     num_classes = 10
-    epochs = 12
+    epochs = 5
 
     img_rows, img_cols = 28, 28
 
@@ -77,6 +73,6 @@ def model_train():
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
 
-    bot.send_message('Test loss:' + str(score[0]))
-    bot.send_message('Test accuracy:' + str(score[1]))
+    bot.send_message('Test loss:' + str(score[0]), chat_id = update['message']['chat']['id'])
+    bot.send_message('Test accuracy:' + str(score[1]), chat_id = update['message']['chat']['id'])
 

@@ -1,5 +1,5 @@
 type_of_problem: 
-no_of_nodes: 128
-no_of_layers: 5
-activations: relu
-metrics: Accuracy
+no_of_nodes: 
+no_of_layers: 
+activations: 
+metrics: 

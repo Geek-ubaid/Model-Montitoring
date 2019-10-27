@@ -1,24 +1,22 @@
-from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
-from telegram.ext import (Updater, CommandHandler, Filters, RegexHandler,
-                          ConversationHandler, MessageHandler)
-import numpy as np
+from telegram.ext import Updater, CommandHandler, Filters, RegexHandler,ConversationHandler, MessageHandler
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
+import keras_mnist_example as kr
 from functools import wraps
-
-import logging
 from io import BytesIO
+import numpy as np
+import logging
+import json    
+
 try:
     import matplotlib.pyplot as plt
 except ImportError:
     plt = None
-import json    
-import keras_mnist_example as kr
     
 class DLBot(object):
 
     def __init__(self, token, user_id=None):
 
         self.config_model_file = {'type_of_problem': '','no_of_nodes':'', 'no_of_layers':'', 'activations':'', 'metrics':''}
-
         assert isinstance(token, str), 'Token must be of type string'
         assert user_id is None or isinstance(user_id, int), 'user_id must be of type int (or None)'
 
@@ -108,11 +106,11 @@ class DLBot(object):
 
     def create(self,bot,update):
         
-        print("hello")
         keyboard = [['1','2']]
         update.message.reply_text(self.create_message, reply_markup=ReplyKeyboardMarkup(keyboard))
         self.chat_id = update.message.chat_id
         text = update.message.text    
+        
         if text:
         	print('text recieved')
 
@@ -120,9 +118,9 @@ class DLBot(object):
             return CommandHandler.END
         
     def train(self,bot,update):
-        print(update)
+        
         print("train")
-        kr.model_train()
+        kr.model_train(bot,update)
             
 
     def setup_model(self,bot,update):
@@ -217,7 +215,8 @@ class DLBot(object):
         
 
     def start(self, bot, update):
-        self.user_id = 645230191
+        print(update)
+        self.user_id = update.message.chat.id
         """ Telegram bot callback for the /start command.
         Fetches chat_id, activates automatic epoch updates and sends startup message"""
         
