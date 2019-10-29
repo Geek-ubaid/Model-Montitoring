@@ -102,11 +102,11 @@ class DLBot(object):
         dp.add_handler(CommandHandler("quiet", self.quiet, filters=self.filters))  
         dp.add_handler(CommandHandler("plot", self.plot_loss, filters=self.filters))  # /plot loss
         
-        update_handler = ConversationHandler(
-            entry_points = [CommandHandler('update', self.update)],
-            states = {},
-            fallbacks = [CommandHandler('cancel',self.cancel)]
-        )
+        # update_handler = ConversationHandler(
+        #     entry_points = [CommandHandler('update', self.modify)],
+        #     states = {},
+        #     fallbacks = [CommandHandler('cancel',self.cancel)]
+        # )
 
         make_handler = ConversationHandler(
             entry_points=[CommandHandler('make',self.create)],
@@ -120,7 +120,7 @@ class DLBot(object):
             fallbacks=[CommandHandler('cancel',self.cancel)]
         )
         dp.add_handler(make_handler)
-        dp.add_handler(update_handler)
+        # dp.add_handler(update_handler)
 
         self.updater.start_polling()
         self.bot_active = True
