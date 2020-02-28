@@ -1,5 +1,6 @@
 __pycache__
 GDG
 modelenv
+env/
 .vscode
 bot/__pycache__
