@@ -4,3 +4,5 @@ modelenv
 env/
 .vscode
 bot/__pycache__
+.env
+bot/config.py

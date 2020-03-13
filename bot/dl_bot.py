@@ -88,6 +88,7 @@ class DLBot(object):
     def activate_bot(self):
 
         self.updater = Updater(self.token)  
+        
         dp = self.updater.dispatcher  
         dp.add_error_handler(self.showError)  
 
@@ -125,13 +126,12 @@ class DLBot(object):
         self.updater.start_polling()
         self.bot_active = True
         print("Bot started")
-
+    
         # Uncomment next line while debugging
         # self.updater.idle()
            
 
     def create(self,bot,update):
-        
         keyboard = [['1','2']]
         update.message.reply_text(self.create_message, reply_markup=ReplyKeyboardMarkup(keyboard))
         self.chat_id = update.message.chat_id
@@ -143,7 +143,11 @@ class DLBot(object):
         
     def train(self,bot,update):
         print("train")
-        kr.model_train(bot,update)
+        score = kr.model_train(bot,update)
+        if self.config_model_file['type_of_problem'] == 'Classification':
+            for i in score:
+                self.send_message(str(i))
+    
         
     def setmodeltype(self,bot,update):
         print('inside setmodeltype')
@@ -197,7 +201,7 @@ class DLBot(object):
         with open('config.json', 'w') as file:
             file.write(json.dumps(self.config_model_file))
         return ConversationHandler.END     
-        
+
     def view_model(self):
         print("The model architecture is:")
     
@@ -229,28 +233,21 @@ class DLBot(object):
         
 
     def start(self, bot, update):
+         """ Telegram bot callback for the /start command.
+        Fetches chat_id, activates automatic epoch updates and sends startup message"""
         print(update)
         self.user_id = update.message.chat.id
-        """ Telegram bot callback for the /start command.
-        Fetches chat_id, activates automatic epoch updates and sends startup message"""
-        
         update.message.reply_text(self.startup_message, reply_markup=ReplyKeyboardRemove())
-
         self.chat_id = update.message.chat_id
-        # self.user_id = self.chat_id
-        print(self.chat_id)
-        print(self.user_id)
         self.verbose = True
 
     def help(self, bot, update):
         """ Telegram bot callback for the /help command. Replies the startup message"""
-        
         update.message.reply_text(self.startup_message, reply_markup=ReplyKeyboardRemove())
         self.chat_id = update.message.chat_id
 
     def quiet(self, bot, update):
         """ Telegram bot callback for the /quiet command. Stops automatic epoch updates"""
-        
         self.verbose = False
         update.message.reply_text(" Automatic epoch updates turned off. Send /start to turn epoch updates back on.")
 

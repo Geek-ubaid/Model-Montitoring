@@ -1,0 +1,1 @@
+{"no_of_hidden_layers": 3, "hidden_unit_size": 64, "activation_function": "relu", "category": 2, "metrics": ["accuracy"], "optimizer": "Adam"}

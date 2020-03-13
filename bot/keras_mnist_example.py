@@ -72,7 +72,7 @@ def model_train(bot,update):
     score = model.evaluate(x_test, y_test, verbose=0)
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
-
-    bot.send_message('Test loss:' + str(score[0]), chat_id = update['message']['chat']['id'])
-    bot.send_message('Test accuracy:' + str(score[1]), chat_id = update['message']['chat']['id'])
+    return score
+    # bot.send_message('Test loss:' + str(score[0]), chat_id = update['message']['chat']['id'])
+    # bot.send_message('Test accuracy:' + str(score[1]), chat_id = update['message']['chat']['id'])
 
